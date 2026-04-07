@@ -1,0 +1,14 @@
+.git
+.gitignore
+.github
+.kiro
+build
+dist
+vendor
+examples
+*.md
+LICENSE
+Makefile
+.golangci.yml
+.dockerignore
+Dockerfile

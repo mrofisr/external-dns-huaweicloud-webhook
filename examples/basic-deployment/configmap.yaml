@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: external-dns
+data:
+  cred.json: |
+    {
+      "region": "ap-southeast-3",
+      "projectId": "<your-project-id>",
+      "idpId": "<your-idp-name>"
+    }

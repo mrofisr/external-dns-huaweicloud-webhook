@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: external-dns
+  template:
+    metadata:
+      labels:
+        app: external-dns
+    spec:
+      serviceAccountName: external-dns
+      containers:
+        - name: external-dns
+          image: registry.k8s.io/external-dns/external-dns:v0.21.0
+          args:
+            - --source=service
+            - --source=ingress
+            - --provider=webhook
+            - --registry=txt
+            - --txt-owner-id=my-identifier
+            - --txt-prefix=hwc.
+        - name: huaweicloud-webhook
+          image: <your-registry>/external-dns-huaweicloud-webhook:latest
+          ports:
+            - containerPort: 8888
+          env:
+            - name: CONFIG_FILE
+              value: /etc/kubernetes/cred.json
+            - name: ZONE_TYPE
+              value: public
+            - name: TOKEN_FILE
+              value: /var/run/secrets/token
+            - name: ZONE_MATCH_PARENT
+              value: "false"
+            - name: LOG_LEVEL
+              value: info
+            - name: LOG_FORMAT
+              value: text
+            - name: EXPIRATION_SECONDS
+              value: "7200"
+          volumeMounts:
+            - mountPath: /etc/kubernetes
+              name: config-volume
+              readOnly: true
+            - mountPath: /var/run/secrets
+              name: token
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: external-dns
+            items:
+              - key: cred.json
+                path: cred.json
+        - name: token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: external-dns
+                  expirationSeconds: 7200
+                  path: token
